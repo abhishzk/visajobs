@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s | VisaJobs Ireland",
   },
   description:
-    "Search 12,900+ companies that sponsor work permits in Ireland. Compare permit types, check salary thresholds, and plan your visa sponsorship job search with official government data.",
+    "Search 22,500+ companies that sponsor work permits in Ireland. Compare permit types, check salary thresholds, and plan your visa sponsorship job search with official government data.",
   keywords: [
     "Ireland work permit",
     "visa sponsorship Ireland",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "VisaJobs Ireland - Find Visa Sponsor Companies",
     description:
-      "Search 12,900+ companies that sponsor work permits in Ireland. Official government data from 2019-2026.",
+      "Search 22,500+ companies that sponsor work permits in Ireland. Official government data from 2019-2026.",
     type: "website",
     locale: "en_IE",
     siteName: "VisaJobs Ireland",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "VisaJobs Ireland - Find Visa Sponsor Companies",
     description:
-      "Search 12,900+ companies that sponsor work permits in Ireland.",
+      "Search 22,500+ companies that sponsor work permits in Ireland.",
   },
   robots: {
     index: true,

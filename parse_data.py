@@ -12,6 +12,10 @@ os.makedirs(output_dir, exist_ok=True)
 # ============================================================
 all_companies = []
 
+SKIP_NAMES = {'grand total', 'jan - dec', 'jan', 'feb', 'mar', 'apr', 'may',
+              'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'total',
+              'issued', 'employer name', ''}
+
 for year in range(2019, 2027):
     year_dir = os.path.join(data_dir, str(year))
     company_file = None
@@ -19,71 +23,103 @@ for year in range(2019, 2027):
         if 'compan' in f.lower():
             company_file = os.path.join(year_dir, f)
             break
-    
+
     if not company_file:
         continue
-    
+
     df = pd.read_excel(company_file, header=None)
-    
-    # Find header row (contains 'Employer' or company name column)
-    header_row = None
-    for i, row in df.iterrows():
-        row_str = ' '.join([str(v) for v in row.values if pd.notna(v)])
-        if 'employer' in row_str.lower() or 'grand total' in row_str.lower():
-            if 'employer' in row_str.lower():
-                header_row = i
+    rows = df.values.tolist()
+    ncols = df.shape[1]
+    year_count = 0
+
+    # Detect format by examining first 5 rows
+    # Find: which column has company names, which has the grand total,
+    # and which row does data start at.
+    name_col_idx = None
+    total_col_idx = None
+    data_start = 0
+
+    # Strategy: find the header row containing 'Employer Name' in first 5 rows
+    header_row_idx = None
+    for i in range(min(5, len(rows))):
+        for j, val in enumerate(rows[i]):
+            if isinstance(val, str) and 'employer' in val.lower().strip():
+                header_row_idx = i
+                name_col_idx = j
                 break
-    
-    if header_row is None:
-        # Try different approach for older formats
-        for i, row in df.iterrows():
-            if any('Employer' in str(v) for v in row.values if pd.notna(v)):
-                header_row = i
+        if header_row_idx is not None:
+            break
+
+    if header_row_idx is not None:
+        # Found header — look for Grand Total column in that row
+        for j, val in enumerate(rows[header_row_idx]):
+            if isinstance(val, str) and 'grand total' in val.lower():
+                total_col_idx = j
                 break
-    
-    if header_row is not None:
-        df.columns = df.iloc[header_row]
-        df = df.iloc[header_row + 1:]
-    
-    # Find the employer name column and total column
-    name_col = None
-    total_col = None
-    for col in df.columns:
-        col_str = str(col).lower()
-        if 'employer' in col_str:
-            name_col = col
-        elif 'grand total' in col_str or col_str == 'total':
-            total_col = col
-    
-    if name_col is None:
-        # For 2019 format - use column index
-        cols = list(df.columns)
-        if len(cols) >= 5:
-            name_col = cols[4] if pd.isna(cols[4]) or 'Employer' in str(cols[4]) else cols[-1]
-            total_col = cols[3] if pd.isna(cols[3]) else cols[1]
-    
-    if name_col is None:
-        print(f"  Could not find employer column for {year}")
+        # If no Grand Total label in header (2020-2023: col 1 is NaN but holds totals)
+        if total_col_idx is None:
+            # Check if col 1 header is NaN and the Grand Total data row has a big number there
+            for i in range(header_row_idx + 1, min(header_row_idx + 3, len(rows))):
+                if isinstance(rows[i][name_col_idx], str) and 'grand total' in rows[i][name_col_idx].lower():
+                    # This is the summary row — col 1 should have the yearly total
+                    for j in range(ncols):
+                        if j != name_col_idx and isinstance(rows[i][j], (int, float)) and not pd.isna(rows[i][j]):
+                            val = rows[i][j]
+                            # The grand total is typically the largest number in this row
+                            all_nums = [rows[i][k] for k in range(ncols) if isinstance(rows[i][k], (int, float)) and not pd.isna(rows[i][k])]
+                            if val == max(all_nums):
+                                total_col_idx = j
+                                break
+                    break
+        # Data starts after header, skip the Grand Total summary row
+        data_start = header_row_idx + 1
+    else:
+        # No 'Employer Name' header found (e.g. 2025)
+        # Check if last column header says 'Grand Total'
+        for j in range(ncols - 1, -1, -1):
+            val = rows[0][j] if len(rows) > 0 else None
+            if isinstance(val, str) and 'grand total' in val.lower():
+                total_col_idx = j
+                break
+        # Company names are in col 0
+        name_col_idx = 0
+        data_start = 1  # Row 0 is header-like
+
+    # For 2019 format (5 cols): name in col with 'Employer Name' header,
+    # total is the numeric value in the same row
+    # Already handled if header was found
+
+    if name_col_idx is None:
+        print(f"  WARNING: Could not detect format for {year}, skipping")
         continue
 
-    for _, row in df.iterrows():
-        name = row.get(name_col)
-        if pd.isna(name) or not isinstance(name, str) or name.strip() == '':
+    print(f"  {year}: name_col={name_col_idx}, total_col={total_col_idx}, data_start={data_start}, shape={df.shape}")
+
+    for i in range(data_start, len(rows)):
+        row = rows[i]
+        name = row[name_col_idx]
+        if not isinstance(name, str) or pd.isna(name):
             continue
         name = name.strip()
-        if name.lower() in ['grand total', 'jan - dec', 'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']:
+        if name.lower() in SKIP_NAMES:
             continue
-        
-        # Get total - try different column names
+
         total = 0
-        if total_col and pd.notna(row.get(total_col)):
-            total = int(row[total_col]) if pd.notna(row[total_col]) else 0
-        else:
-            # Try to find any numeric column that looks like a total
-            for col_name in ['Grand Total', 'Permits Issued Grand Total', 'Total']:
-                if col_name in df.columns and pd.notna(row.get(col_name)):
-                    total = int(row[col_name])
-                    break
+        if total_col_idx is not None:
+            val = row[total_col_idx]
+            if isinstance(val, (int, float)) and not pd.isna(val):
+                total = int(val)
+
+        # Fallback: sum all numeric values in the row (excluding the name column)
+        if total == 0:
+            row_sum = 0
+            for j in range(ncols):
+                if j == name_col_idx:
+                    continue
+                val = row[j]
+                if isinstance(val, (int, float)) and not pd.isna(val) and val > 0:
+                    row_sum += int(val)
+            total = row_sum
 
         if total > 0:
             all_companies.append({
@@ -91,6 +127,9 @@ for year in range(2019, 2027):
                 "year": year,
                 "permits": total
             })
+            year_count += 1
+
+    print(f"  {year}: {year_count} companies parsed")
 
 print(f"Companies records: {len(all_companies)}")
 

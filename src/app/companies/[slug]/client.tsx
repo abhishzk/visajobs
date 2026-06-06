@@ -15,7 +15,13 @@ export default function ClientCompanyDetail({
   name: string;
   records: Record[];
 }) {
-  const [savedCompanies, setSavedCompanies] = useState<string[]>([]);
+  const [savedCompanies, setSavedCompanies] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("savedCompanies");
+      if (saved) return JSON.parse(saved);
+    }
+    return [];
+  });
 
   const stats = useMemo(() => {
     const totalPermits = records.reduce((sum, r) => sum + r.permits, 0);
@@ -93,8 +99,8 @@ export default function ClientCompanyDetail({
             <span className="text-2xl">{stats.indicator.icon}</span>
           </div>
           <p className="text-xs text-slate-500 mt-2">
-            {stats.previousYear}: {stats.previousYearPermits.toLocaleString()} →{" "}
-            {stats.currentYear}: {stats.currentYearPermits.toLocaleString()}
+            {Math.max(...YEARS) - 1}: {stats.previousYearPermits.toLocaleString()} →{" "}
+            {Math.max(...YEARS)}: {stats.currentYearPermits.toLocaleString()}
           </p>
         </div>
 

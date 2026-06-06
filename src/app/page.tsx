@@ -93,6 +93,64 @@ export default function Home() {
       {/* Trending Companies */}
       <TrendingSection />
 
+      {/* Visa Guides & Tools */}
+      <section className="bg-white border-t border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <h2 className="text-3xl font-bold text-center mb-3">
+            Your Complete Visa Guide
+          </h2>
+          <p className="text-center text-slate-600 max-w-2xl mx-auto mb-10">
+            Not just data — we walk you through the entire process from
+            application to citizenship, based on official government sources.
+          </p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              {
+                title: "Permit Types",
+                desc: "Compare all 9 permit types at a glance",
+                href: "/guides/permit-types",
+                color: "bg-emerald-50 border-emerald-200 text-emerald-700",
+              },
+              {
+                title: "How to Apply",
+                desc: "Step-by-step through EPOL",
+                href: "/guides/how-to-apply",
+                color: "bg-blue-50 border-blue-200 text-blue-700",
+              },
+              {
+                title: "After Approval",
+                desc: "IRP, stamps, PPS number",
+                href: "/guides/after-approval",
+                color: "bg-amber-50 border-amber-200 text-amber-700",
+              },
+              {
+                title: "Long-Term Path",
+                desc: "Stamp 4, residency, citizenship",
+                href: "/guides/long-term-pathway",
+                color: "bg-purple-50 border-purple-200 text-purple-700",
+              },
+            ].map((guide) => (
+              <Link
+                key={guide.href}
+                href={guide.href}
+                className={`rounded-xl border p-5 hover:shadow-md transition-shadow ${guide.color}`}
+              >
+                <h3 className="font-bold text-lg">{guide.title}</h3>
+                <p className="text-sm mt-1 opacity-80">{guide.desc}</p>
+              </Link>
+            ))}
+          </div>
+          <div className="mt-6 text-center">
+            <Link
+              href="/tools/salary-checker"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-emerald-700 text-white font-semibold hover:bg-emerald-800 transition-colors"
+            >
+              Check Your Salary Eligibility
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* How it works */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <h2 className="text-3xl font-bold text-center mb-12">How it works</h2>

@@ -14,9 +14,40 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VisaJobs Ireland - Employment Permit Data",
+  title: {
+    default: "VisaJobs Ireland - Employment Permit Data & Visa Guides",
+    template: "%s | VisaJobs Ireland",
+  },
   description:
-    "Discover which companies, sectors, counties, and nationalities are getting employment permits in Ireland. Powered by official government data.",
+    "Search 12,900+ companies that sponsor work permits in Ireland. Compare permit types, check salary thresholds, and plan your visa sponsorship job search with official government data.",
+  keywords: [
+    "Ireland work permit",
+    "visa sponsorship Ireland",
+    "employment permit Ireland",
+    "critical skills permit",
+    "Ireland visa jobs",
+    "work in Ireland",
+    "Irish employment permit",
+    "visa sponsor companies Ireland",
+  ],
+  openGraph: {
+    title: "VisaJobs Ireland - Find Visa Sponsor Companies",
+    description:
+      "Search 12,900+ companies that sponsor work permits in Ireland. Official government data from 2019-2026.",
+    type: "website",
+    locale: "en_IE",
+    siteName: "VisaJobs Ireland",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "VisaJobs Ireland - Find Visa Sponsor Companies",
+    description:
+      "Search 12,900+ companies that sponsor work permits in Ireland.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 const navLinks = [
@@ -25,6 +56,8 @@ const navLinks = [
   { href: "/sectors", label: "Sectors" },
   { href: "/counties", label: "Counties" },
   { href: "/nationalities", label: "Nationalities" },
+  { href: "/guides", label: "Guides" },
+  { href: "/tools/salary-checker", label: "Salary Checker" },
 ];
 
 export default function RootLayout({

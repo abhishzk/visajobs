@@ -1,19 +1,15 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { promises as fs } from "fs";
+import path from "path";
 import ClientCompanyDetail from "./client";
 
 async function getCompanyData(slug: string) {
   try {
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
+    const filePath = path.join(process.cwd(), "public", "data", "companies.json");
+    const raw = await fs.readFile(filePath, "utf-8");
+    const data = JSON.parse(raw);
 
-    const res = await fetch(`${baseUrl}/data/companies.json`, {
-      next: { revalidate: 3600 },
-    });
-    if (!res.ok) return null;
-
-    const data = await res.json();
     const companyName = data
       .map((r: any) => r.name)
       .filter((name: string, idx: number, arr: string[]) => arr.indexOf(name) === idx)
@@ -32,7 +28,7 @@ async function getCompanyData(slug: string) {
       .sort((a: any, b: any) => a.year - b.year);
 
     return { name: companyName, records };
-  } catch (e) {
+  } catch {
     return null;
   }
 }

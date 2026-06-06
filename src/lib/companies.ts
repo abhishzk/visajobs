@@ -79,7 +79,12 @@ export function getTrendingCompanies(
         company.yearData[previousYear]
       ),
     }))
-    .filter((c) => c.growth !== null && c.growth > 0)
+    .filter(
+      (c) =>
+        c.growth !== null &&
+        c.growth > 0 &&
+        (c.yearData[currentYear] || 0) >= 3
+    )
     .sort((a, b) => (b.growth || 0) - (a.growth || 0))
     .slice(0, limit);
 }

@@ -25,6 +25,8 @@ const navLinks = [
   { href: "/sectors", label: "Sectors" },
   { href: "/counties", label: "Counties" },
   { href: "/nationalities", label: "Nationalities" },
+  { href: "/guides", label: "Guides" },
+  { href: "/tools/salary-checker", label: "Salary Checker" },
 ];
 
 export default function RootLayout({

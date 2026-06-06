@@ -50,7 +50,7 @@ export async function generateMetadata({
   }
 
   const totalPermits = company.records.reduce(
-    (sum, r: any) => sum + r.permits,
+    (sum: number, r: any) => sum + r.permits,
     0
   );
 

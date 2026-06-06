@@ -5,7 +5,7 @@ import HomeSearch from "@/components/HomeSearch";
 const stats = [
   {
     label: "Companies",
-    value: "22,500+",
+    value: "22,570+",
     desc: "Companies issued employment permits",
     href: "/companies",
     color: "bg-emerald-50 text-emerald-700 border-emerald-200",

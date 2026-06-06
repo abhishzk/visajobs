@@ -1,4 +1,6 @@
 import Link from "next/link";
+import TrendingSection from "@/components/TrendingSection";
+import HomeSearch from "@/components/HomeSearch";
 
 const stats = [
   {
@@ -63,6 +65,11 @@ export default function Home() {
               Browse by Sector
             </Link>
           </div>
+
+          {/* Global Search */}
+          <div className="mt-8 max-w-md">
+            <HomeSearch />
+          </div>
         </div>
       </section>
 
@@ -82,6 +89,9 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* Trending Companies */}
+      <TrendingSection />
 
       {/* How it works */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">

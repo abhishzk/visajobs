@@ -242,10 +242,109 @@ for year in range(2019, 2027):
 print(f"Sector records: {len(all_sectors)}")
 
 # ============================================================
-# Save all data
+# 5. COMPANY-TO-SECTOR MAPPING
+# ============================================================
+company_sectors = {}  # {company_name: set(sectors)}
+company_counties = {}  # {company_name: set(counties)}
+
+# Extract from sector files
+for year in range(2019, 2027):
+    year_dir = os.path.join(data_dir, str(year))
+    sector_file = None
+    for f in os.listdir(year_dir):
+        if 'sector' in f.lower():
+            sector_file = os.path.join(year_dir, f)
+            break
+
+    if not sector_file:
+        continue
+
+    try:
+        df = pd.read_excel(sector_file, header=None)
+        current_sector = None
+
+        for i, row in df.iterrows():
+            vals = list(row.values)
+
+            # Detect sector name (first column, non-numeric)
+            if vals and isinstance(vals[0], str) and vals[0].strip():
+                v_clean = vals[0].strip()
+                if v_clean.lower() not in ['sector', 'economic sector', 'grand total', 'jan - dec', 'no sector entered', 'total']:
+                    if any(c.isalpha() for c in v_clean):
+                        current_sector = v_clean
+
+            # Look for company names (string followed by numbers)
+            if current_sector and len(vals) > 1:
+                company_name = None
+                if isinstance(vals[0], str):
+                    v_clean = vals[0].strip()
+                    if v_clean and v_clean.lower() not in ['sector', 'economic sector', 'grand total', 'jan - dec'] and len(v_clean) > 2:
+                        if current_sector and v_clean != current_sector:  # Not the sector header
+                            company_name = v_clean
+
+                if company_name and any(isinstance(v, (int, float)) and v > 0 for v in vals[1:]):
+                    if company_name not in company_sectors:
+                        company_sectors[company_name] = set()
+                    company_sectors[company_name].add(current_sector)
+    except Exception as e:
+        print(f"  Warning: Could not parse sector file for {year}: {e}")
+
+# Extract from county files
+for year in range(2019, 2027):
+    year_dir = os.path.join(data_dir, str(year))
+    county_file = None
+    for f in os.listdir(year_dir):
+        if 'county' in f.lower():
+            county_file = os.path.join(year_dir, f)
+            break
+
+    if not county_file:
+        continue
+
+    try:
+        df = pd.read_excel(county_file, header=None)
+        current_county = None
+        counties_known = ['Dublin', 'Cork', 'Galway', 'Limerick', 'Waterford', 'Kerry', 'Donegal',
+                          'Kildare', 'Meath', 'Wicklow', 'Wexford', 'Kilkenny', 'Tipperary',
+                          'Clare', 'Mayo', 'Sligo', 'Louth', 'Westmeath', 'Offaly', 'Laois',
+                          'Cavan', 'Monaghan', 'Roscommon', 'Longford', 'Leitrim', 'Carlow']
+
+        for i, row in df.iterrows():
+            vals = list(row.values)
+
+            # Detect county name
+            for v in vals:
+                if isinstance(v, str) and v.strip() in counties_known:
+                    current_county = v.strip()
+                    break
+
+            # Look for company names in this county section
+            if current_county and vals and isinstance(vals[0], str):
+                company_name = vals[0].strip()
+                if company_name and company_name.lower() not in ['county', 'grand total', 'jan - dec'] and len(company_name) > 2:
+                    if any(isinstance(v, (int, float)) and v > 0 for v in vals[1:]):
+                        if company_name not in company_counties:
+                            company_counties[company_name] = set()
+                        company_counties[company_name].add(current_county)
+    except Exception as e:
+        print(f"  Warning: Could not parse county file for {year}: {e}")
+
+print(f"Company-sector mappings: {len(company_sectors)}")
+print(f"Company-county mappings: {len(company_counties)}")
+
+# ============================================================
+# 5. SAVE ALL DATA
 # ============================================================
 with open(os.path.join(output_dir, "companies.json"), "w") as f:
-    json.dump(all_companies, f)
+    # Enrich company data with sectors and counties
+    enriched_companies = []
+    for company in all_companies:
+        enriched_companies.append({
+            **company,
+            "sectors": list(company_sectors.get(company['name'], [])),
+            "counties": list(company_counties.get(company['name'], []))
+        })
+    json.dump(enriched_companies, f)
 
 with open(os.path.join(output_dir, "counties.json"), "w") as f:
     json.dump(all_counties, f)

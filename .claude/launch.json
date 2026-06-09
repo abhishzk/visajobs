@@ -4,8 +4,8 @@
     {
       "name": "visajobs",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "source ~/.nvm/nvm.sh && nvm use 20.19.4 && npm run dev -- -p 3002"],
-      "port": 3002
+      "runtimeArgs": ["-c", "source ~/.nvm/nvm.sh && nvm use 20.19.4 && npm run dev"],
+      "autoPort": true
     }
   ]
 }

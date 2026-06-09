@@ -51,24 +51,30 @@ export default function Home() {
             sectors, and counties are issuing employment permits. Make your visa
             sponsorship job search easier.
           </p>
-          <div className="mt-10 flex flex-wrap gap-4">
+          {/* Global Search */}
+          <div className="mt-10 max-w-xl">
+            <HomeSearch />
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3">
             <Link
               href="/companies"
-              className="inline-flex items-center px-6 py-3 rounded-lg bg-white text-emerald-800 font-semibold hover:bg-emerald-50 transition-colors"
+              className="inline-flex items-center px-5 py-2.5 rounded-lg border border-white/25 text-emerald-100 text-sm font-medium hover:bg-white/10 transition-colors"
             >
-              Search Companies
+              Browse all companies
             </Link>
             <Link
               href="/sectors"
-              className="inline-flex items-center px-6 py-3 rounded-lg border-2 border-emerald-400 text-white font-semibold hover:bg-emerald-600 transition-colors"
+              className="inline-flex items-center px-5 py-2.5 rounded-lg border border-white/25 text-emerald-100 text-sm font-medium hover:bg-white/10 transition-colors"
             >
-              Browse by Sector
+              Browse by sector
             </Link>
-          </div>
-
-          {/* Global Search */}
-          <div className="mt-8 max-w-md">
-            <HomeSearch />
+            <Link
+              href="/guides/permit-types"
+              className="inline-flex items-center px-5 py-2.5 rounded-lg border border-white/25 text-emerald-100 text-sm font-medium hover:bg-white/10 transition-colors"
+            >
+              Permit types guide
+            </Link>
           </div>
         </div>
       </section>

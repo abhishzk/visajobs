@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   CompanyRecord,
-  AggregatedCompany,
   YEARS,
   aggregateCompanies,
   slugify,
   getGrowthPercent,
   getGrowthIndicator,
 } from "@/lib/companies";
+import { useSavedCompanies } from "@/hooks/useSavedCompanies";
 
 export default function CompaniesClient() {
   const searchParams = useSearchParams();
@@ -22,18 +22,37 @@ export default function CompaniesClient() {
   const [selectedYear, setSelectedYear] = useState<number | "all">("all");
   const [sortBy, setSortBy] = useState<"permits" | "name" | "years">("permits");
   const [page, setPage] = useState(1);
-  const [savedCompanies, setSavedCompanies] = useState<string[]>([]);
   const perPage = 50;
+
+  const { isSaved, toggleSave } = useSavedCompanies();
+
+  // --- Search tracking (debounced, fire-and-forget) ---
+  const searchTrackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTrackedSearch = useRef("");
+
+  const trackSearch = useCallback(
+    (query: string, filters: Record<string, unknown>, resultCount: number) => {
+      // Only track non-empty, changed searches
+      const key = `${query}|${JSON.stringify(filters)}`;
+      if (!query || key === lastTrackedSearch.current) return;
+      lastTrackedSearch.current = key;
+
+      // Fire-and-forget — don't block UI
+      fetch("/api/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, filters, resultCount }),
+      }).catch(() => {
+        /* ignore */
+      });
+    },
+    []
+  );
 
   useEffect(() => {
     fetch("/data/companies.json")
       .then((r) => r.json())
       .then(setData);
-  }, []);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("savedCompanies");
-    if (saved) setSavedCompanies(JSON.parse(saved));
   }, []);
 
   const aggregated = useMemo(() => aggregateCompanies(data), [data]);
@@ -65,6 +84,23 @@ export default function CompaniesClient() {
 
     return result;
   }, [aggregated, search, selectedYear, sortBy]);
+
+  // Debounced search tracking — fires 1.5s after user stops typing
+  useEffect(() => {
+    if (searchTrackTimer.current) clearTimeout(searchTrackTimer.current);
+    if (!search) return;
+
+    searchTrackTimer.current = setTimeout(() => {
+      const filters: Record<string, unknown> = {};
+      if (selectedYear !== "all") filters.year = selectedYear;
+      if (sortBy !== "permits") filters.sortBy = sortBy;
+      trackSearch(search, filters, filtered.length);
+    }, 1500);
+
+    return () => {
+      if (searchTrackTimer.current) clearTimeout(searchTrackTimer.current);
+    };
+  }, [search, selectedYear, sortBy, filtered.length, trackSearch]);
 
   const totalPages = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
@@ -143,19 +179,19 @@ export default function CompaniesClient() {
             href="/sectors"
             className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors"
           >
-            📊 Browse Sectors
+            Browse Sectors
           </Link>
           <Link
             href="/counties"
             className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
           >
-            📍 Browse Counties
+            Browse Counties
           </Link>
           <Link
             href="/nationalities"
             className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
           >
-            🌍 Browse Nationalities
+            Browse Nationalities
           </Link>
         </div>
       </div>
@@ -187,6 +223,7 @@ export default function CompaniesClient() {
             </thead>
             <tbody>
               {paginated.map((company, idx) => {
+                const companySlug = slugify(company.name);
                 const currentYear = Math.max(...YEARS);
                 const previousYear = currentYear - 1;
                 const growth = getGrowthPercent(
@@ -194,7 +231,7 @@ export default function CompaniesClient() {
                   company.yearData[previousYear]
                 );
                 const indicator = getGrowthIndicator(growth);
-                const isSaved = savedCompanies.includes(company.name);
+                const saved = isSaved(companySlug);
 
                 return (
                   <tr
@@ -206,7 +243,7 @@ export default function CompaniesClient() {
                     </td>
                     <td className="px-4 py-3">
                       <Link
-                        href={`/companies/${slugify(company.name)}`}
+                        href={`/companies/${companySlug}`}
                         className="font-medium text-emerald-700 hover:text-emerald-900 hover:underline"
                       >
                         {company.name}
@@ -222,19 +259,10 @@ export default function CompaniesClient() {
                           </span>
                         )}
                         <button
-                          onClick={() => {
-                            const updated = isSaved
-                              ? savedCompanies.filter((c) => c !== company.name)
-                              : [...savedCompanies, company.name];
-                            setSavedCompanies(updated);
-                            localStorage.setItem(
-                              "savedCompanies",
-                              JSON.stringify(updated)
-                            );
-                          }}
+                          onClick={() => toggleSave(companySlug, company.name)}
                           className="ml-auto text-slate-400 hover:text-slate-600"
                         >
-                          {isSaved ? "★" : "☆"}
+                          {saved ? "★" : "☆"}
                         </button>
                       </div>
                     </td>

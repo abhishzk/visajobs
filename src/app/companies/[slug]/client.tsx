@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { getGrowthPercent, getGrowthIndicator, YEARS } from "@/lib/companies";
+import { useMemo } from "react";
+import { getGrowthPercent, getGrowthIndicator, YEARS, slugify } from "@/lib/companies";
+import { useSavedCompanies } from "@/hooks/useSavedCompanies";
 
 interface Record {
   year: number;
@@ -15,13 +16,8 @@ export default function ClientCompanyDetail({
   name: string;
   records: Record[];
 }) {
-  const [savedCompanies, setSavedCompanies] = useState<string[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("savedCompanies");
-      if (saved) return JSON.parse(saved);
-    }
-    return [];
-  });
+  const { isSaved, toggleSave } = useSavedCompanies();
+  const slug = slugify(name);
 
   const stats = useMemo(() => {
     const totalPermits = records.reduce((sum, r) => sum + r.permits, 0);
@@ -48,15 +44,7 @@ export default function ClientCompanyDetail({
     };
   }, [records]);
 
-  const isSaved = savedCompanies.includes(name);
-
-  const toggleSave = () => {
-    setSavedCompanies((prev) => {
-      const updated = isSaved ? prev.filter((c) => c !== name) : [...prev, name];
-      localStorage.setItem("savedCompanies", JSON.stringify(updated));
-      return updated;
-    });
-  };
+  const saved = isSaved(slug);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -68,14 +56,14 @@ export default function ClientCompanyDetail({
             <p className="text-slate-600 mt-2">Employment Permit Sponsorship Data</p>
           </div>
           <button
-            onClick={toggleSave}
+            onClick={() => toggleSave(slug, name)}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              isSaved
+              saved
                 ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
                 : "bg-slate-100 text-slate-700 hover:bg-slate-200"
             }`}
           >
-            {isSaved ? "★ Saved" : "☆ Save"}
+            {saved ? "★ Saved" : "☆ Save"}
           </button>
         </div>
       </div>

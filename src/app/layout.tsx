@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import AuthButton from "@/components/auth/AuthButton";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -88,11 +89,12 @@ export default function RootLayout({
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
+                    className="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors hidden sm:inline-flex"
                   >
                     {link.label}
                   </Link>
                 ))}
+                <AuthButton />
               </div>
             </div>
           </div>
